@@ -1,7 +1,7 @@
-from typing import Optional, List, Union
 
-from fastapi import FastAPI, HTTPException, Path, Query
-from pydantic import BaseModel
+
+from fastapi import FastAPI
+from api import users, courses, sections
 import sentry_sdk
 
 sentry_sdk.init(
@@ -29,42 +29,11 @@ app = FastAPI(
         "url": "https://opensource.org/licenses/MIT"
     }
 )
-
-class User(BaseModel):
-    name: str
-    age: Optional[int]
-    email: str
-    phone: Union[str, None] = None
-
-users = [
-    User(name="Camilo", age=21, email=" ", phone=""),
-    User(name="Andres", age=21, email=" ", phone=""),
-    User(name="David", age=21, email=" ", phone=""),
-    User(name="Juan", age=21, email=" ", phone=""),
-]
-
-@app.get("/users", response_model=list[User])
-def get_users():
-    return users
-
-@app.post("/users")
-def create_user(user: User):
-    users.append(user)
-    return user
-
-@app.get("/users/{id}")
-def get_user(
-    id: int = Path(..., description="The ID of the user to get", gt=2), 
-    q: str = Query(None, max_length=5)):
-    if id >= len(users):
-        raise HTTPException(status_code=404, detail="User not found")
-    return {
-        "user": users[id],
-        "query": q
-    }
         
-
-
 @app.get("/sentry-debug")
 async def trigger_error():
     division_by_zero = 1 / 0
+    
+app.include_router(users.router)
+app.include_router(courses.router)
+app.include_router(sections.router)
